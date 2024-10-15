@@ -16,23 +16,29 @@ export const blogRouter = new Hono<{
     }
   }>();
 
-blogRouter.use("/*", async (c,next) => {
-  const authHeader = c.req.header("authorization") || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
-  const user = await verify(token , c.env.JWT_SECRET);
-  if (user) {
-    c.set("userId", user.id as string);
-    await next();
-  } else {
-    c.status(403);
-    return c.json({
-      message: "You are not logged in"
-    })
-  }
-
-
-});
-
+  blogRouter.use("/*", async (c, next) => {
+    const authHeader = c.req.header("authorization") || "";
+    try {
+      const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+      const user = await verify(token, c.env.JWT_SECRET);
+      
+      if (user) {
+        c.set("userId", user.id as string);
+        await next();
+      } else {
+        c.status(403);
+        return c.json({
+          message: "You are not logged in",
+        });
+      }
+    } catch (e) {
+      c.status(403);
+      return c.json({
+        message: "You are not logged in", 
+      });
+    }
+  });
+  
 
   blogRouter.post('/', async (c) => {
     const prisma = new PrismaClient({
