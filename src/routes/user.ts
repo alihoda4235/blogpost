@@ -2,9 +2,7 @@ import { Hono } from "hono";
 import { PrismaClient } from '@prisma/client/edge'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { decode, jwt, sign, verify } from 'hono/jwt'
-import { Jwt } from 'hono/utils/jwt';
-
-
+import { singinSchema, singupSchema } from "@ali_hoda/blog-common";
 
 
 export const userRouter = new Hono<{
@@ -18,7 +16,18 @@ userRouter.post('/signup', async (c) => {
     const prisma = new PrismaClient({
       datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate());
+
     const body = await c.req.json();
+    
+    const {success} = singupSchema.safeParse(body);
+    if(!success){
+      c.status(403);
+      return c.json({
+        message:"wrong inputs"
+      })
+    
+    }
+
     try{
      const user = await prisma.user.create({
         data: {
@@ -43,7 +52,17 @@ userRouter.post('/signup', async (c) => {
     const prisma = new PrismaClient({
       datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate());
+
     const body = await c.req.json();
+    
+    const {success} = singinSchema.safeParse(body);
+    if (!success) {
+      c.status(403);
+      return c.json({
+        message:"wrong inputs"
+      })
+    }
+
     try{
      const user = await prisma.user.findFirst({
         where: {
